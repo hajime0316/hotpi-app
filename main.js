@@ -17,18 +17,17 @@ tMaxUI.value = tMax;
 tMinUI.value = tMin;*/
 main();
 async function main() {
-  var sensor_unit;
-  var valelem = document.getElementById("distance");
+  // var valelem = document.getElementById("distance");
   //エラーハンドリング：tryのブロック内でエラーが発生するとcatchブロックに処理が飛ぶ
   try {
     //await : async function内でPromiseの結果が返されるまで待機する(処理を一時停止する)
     //navigator : ウェブブラウザの情報を取得できるオブジェクト
     var i2cAccess = await navigator.requestI2CAccess();
     var port = i2cAccess.ports.get(1); //i2cAcessのポート1に接続する
-    // var port2 = i2cAccess.ports.get(2); //i2cAcessのポート2に接続する
-    // var amg8833 = new AMG8833(port, 0x68); // 初期値 0x69 のモデルもあるので注意！]
+    var amg8833 = new AMG8833(port, 0x68); // 初期値 0x69 のモデルもあるので注意！]
+    var sensor_unit = new GP2Y0E03(port, 0x40);
     await sensor_unit.init(); //変数sensor_unitを初期化
-    sensor_unit = new GP2Y0E03(port, 0x40);
+    await amg8833.init(); // 変数amg8833を初期化
 
     //var max = document.getElementById("max");
     //var last = document.getElementById("last");
@@ -43,51 +42,45 @@ async function main() {
     var dmin = [];*/
     // const sleep = (msec) => new Promise((resolve) => setTimeout(resolve, msec));
 
-    //await amg8833.init(); //変数amg8833を初期化
-    //await sensor_unit.init(); //変数sensor_unitを初期化
-
-    end: while (1) {
-      try {
-        var distance = await sensor_unit.read(); //sensor_unitの値を読み込む
-        var spanedSec = 0;
-        if (distance <= 30 && distance >= 10) {
-          // var tImage = await amg8833.readData(); //amg8833の値を読み込む
-          //d = tImage; //tImageを２次元配列に格納
-          //heatMap(tImage);
-          valelem.innerHTML = "Distance:" + distance + "cm";
-          /*dmax = maxs(d);
-        dmin = mins(d);
-        var dmaxmax = maxt(dmax); //全ピクセル(64ピクセル)中の最高温度(dmaxmax)
-        var dminmin = mint(dmin); //全ピクセル(64ピクセル)中の最低温度(dminmin)
-        //csv.push(dmaxmax);
-        //max.innerText = dmaxmax + ","; //HTML内で表示
-        //csv2.innerText = csv; //csvファイルを表示する関数
+    while (1) {
+      var distance = await sensor_unit.read(); //sensor_unitの値を読み込む
+      console.log(distance);
+      var spanedSec = 0;
+      if (distance <= 30 && distance >= 10) {
+        // var tImage = await amg8833.readData(); //amg8833の値を読み込む
+        //d = tImage; //tImageを２次元配列に格納
         //heatMap(tImage);
-        console.log(tImage);*/
-          //await sleep(100);
-          //sum = sum + dmaxmax;
-          //count++;
-        } else if (distance >= 30) {
-          valelem.innerHTML = "近づいてください";
-        } else if (distance <= 10 && distance >= 3) {
-          //手をかざして2秒カウントする
-          while (distance >= 3 && distance <= 10 && spanedSec <= 2000) {
-            spanedSec = spanedSec + 100;
-            await sleep(80);
-            valelem.innerHTML = spanedSec + "秒経過";
-            distance = await sensor_unit.read();
-            if (spanedSec >= 2000) break end;
-          }
-        } else {
-          valelem.innerHTML = "はなれてください";
+        // valelem.innerHTML = "Distance:" + distance + "cm";
+        /*dmax = maxs(d);
+          dmin = mins(d);
+          var dmaxmax = maxt(dmax); //全ピクセル(64ピクセル)中の最高温度(dmaxmax)
+          var dminmin = mint(dmin); //全ピクセル(64ピクセル)中の最低温度(dminmin)
+          //csv.push(dmaxmax);
+          //max.innerText = dmaxmax + ","; //HTML内で表示
+          //csv2.innerText = csv; //csvファイルを表示する関数
+          //heatMap(tImage);
+          console.log(tImage);*/
+        //await sleep(100);
+        //sum = sum + dmaxmax;
+        //count++;
+      } else if (distance >= 30 || distance === null) {
+        console.log("近づいてください");
+      } else if (distance <= 10 && distance >= 3) {
+        //手をかざして2秒カウントする
+        while (distance >= 3 && distance <= 10 && spanedSec <= 2000) {
+          spanedSec = spanedSec + 100;
+          await sleep(80);
+          console.log(spanedSec + " 秒経過");
+          distance = await sensor_unit.read();
+          if (spanedSec >= 2000) break;
         }
-      } catch (err) {
-        console.log("READ ERROR:" + err);
+      } else {
+        console.log("はなれてください");
       }
       await sleep(100);
     }
   } catch (err) {
-    console.log("GP2Y0E03 init error");
+    console.log("READ ERROR:" + err);
   }
 }
 
